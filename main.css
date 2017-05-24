@@ -1,0 +1,53 @@
+body{
+	font-family: "Arial",sans-serif;
+}
+h2{
+	text-align: center;
+	padding-top:2px;
+}
+
+#top{
+	background-color:#606060;
+	height:500px;
+}
+
+#drop_zone{
+	height:250px;
+	padding-top:5px;
+	width: 250px;
+	border: 2px dashed #ccc;
+	color: #ccc;
+	position: absolute;
+	left: 40%;
+}
+
+#pos {
+	
+	text-align:center;
+}
+
+.drop {
+	height:250px;
+	width: 250px;
+	border: 2px dashed #ccc;
+	color: #ccc;
+	line-height: 300px;
+	text-align:center;
+}
+
+.drop.dragover{
+	border-color: #000;
+	color: #000;
+}
+
+#mapholder {
+	padding: 0;
+	width: 500px;
+	height: 500px;
+	 margin: 0 auto 0 auto;
+}
+
+#buttn{
+	
+	text-align:center;
+}

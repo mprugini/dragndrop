@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Lab 3</title>
+	<link type="text/css" rel="stylesheet" href="main.css"/>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body onload="getLocation()">
+<section id="top">
+	<h2>Drag and drop File below</h2>
+	<textarea id="drop_zone">Drop files here</textarea>
+	<h1 id="lat"></h1>
+	<h1 id="lng"></h1>
+	<h1 id="reading_file"></h1>
+</section>
+<br>
+<hr>
+<section id="bottom">
+	<h2>Your current location with reverse geolocation</h2>
+	<section id="buttn">
+		<button onclick="stopWatch()">
+			Stop
+		</button>
+	</section>
+	<div id="current_location"></div>
+	<div id="mapholder"></div>
+	<h1 id="pos"></h1>
+	<h2 id="dis"></h2>
+<hr>
+</section>
+<script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=true"></script>
+<script>
+var dropZone = document.getElementById('drop_zone');
+var readfile = document.getElementById('reading_file');
+var latit = document.getElementById('lat');
+var longit = document.getElementById('lng');
+dropZone.addEventListener('dragover', handleDragOver, false);
+dropZone.addEventListener('drop', handleFileSelect, false);
+  
+var x = document.getElementById("current_location");
+var pos = document.getElementById("pos");
+var dis = document.getElementById("dis");
+
+function handleFileSelect(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+
+    var files = evt.dataTransfer.files; // FileList object.
+    var reader = new FileReader();  
+	reader.readAsBinaryString( files[0] );
+	
+	/*var XHR = new XMLHttpRequest();
+	XHR.open("GET", files[0], true);
+	XHR.send();
+	XHR.onload = function (){
+		console.log( XHR.responseText.slice(0, XHR.responseText.indexOf("\n")) );
+	};*/
+	var lati;
+	var ltd = [];
+	var lon = [];
+    
+	reader.onload = function(event) {            
+         document.getElementById('drop_zone').value = event.target.result;
+		 document.getElementById('reading_file').value = event.target.result;
+		 
+		 document.getElementById('lat').value = event.target.result;
+		 document.getElementById('lng').value = event.target.result;
+		 
+		 var latlngStr = event.target.result.split("\n");
+		 var store = latlngStr.length;
+		 for(var i = 0; i < store; i++){
+			lati = latlngStr[i].split(",");
+			ltd[i] = lati[0]; 					//store all the latitudes
+			lon[i] = lati[1]; 					//store all the longitudes
+			
+		 }
+		 dis.innerHTML = "Distance is " + distance(ltd[0],lon[0],ltd[1],lon[1],'K') + " km";
+		 //latit.innerHTML = latlngStr[0];
+		 //longit.innerHTML = latlngStr[1];
+		 //readfile.innerHTML = latlngStr[1];
+    }        
+    reader.readAsText(files[0],"UTF-8");
+}
+
+function handleDragOver(evt) {
+	evt.stopPropagation();
+    evt.preventDefault();
+}
+	//pos.innerHTML = "Your current latitude is "+position.coords.latitude+" and your current longitude is "+position.coords.longitude;
+	//dis.innerHTML = "Distance is " + distance(position.coords.latitude,position.coords.longitude,latlngStr[0],latlngStr[1],'K') + " km";
+	
+var watchId = null;
+function getLocation() {
+	if (navigator.geolocation) {
+		var optn = {
+				enableHighAccuracy : true,
+				timeout : Infinity,
+				maximumAge : 0
+		};
+	watchId = navigator.geolocation.watchPosition(showPosition, showError, optn);
+	} 
+	else {
+			alert('Geolocation is not supported in your browser');
+	}
+}
+
+function showPosition(position) {
+	var googlePos = new google.maps.LatLng(position.coords.latitude, position.coords.longitude);
+	pos.innerHTML = "Your current latitude is "+position.coords.latitude+" and your current longitude is "+position.coords.longitude;
+	//dis.innerHTML = "Distance is " + distance(position.coords.latitude,position.coords.longitude,ltd,longi,'K') + " km";
+	var mapOptions = {
+		zoom : 12,
+		center : googlePos,
+		mapTypeId : google.maps.MapTypeId.ROADMAP
+	};
+	var mapObj = document.getElementById('mapholder');
+	var googleMap = new google.maps.Map(mapObj, mapOptions);
+	var markerOpt = {
+		map : googleMap,
+		position : googlePos,
+		title : 'Hi , I am here',
+		animation : google.maps.Animation.DROP
+	};
+	var googleMarker = new google.maps.Marker(markerOpt);
+	var geocoder = new google.maps.Geocoder();
+	geocoder.geocode({
+		'latLng' : googlePos
+		}, function(results, status) {
+			if (status == google.maps.GeocoderStatus.OK) {
+				if (results[1]) {
+					var popOpts = {
+						content : results[1].formatted_address,
+						position : googlePos
+					};
+				var popup = new google.maps.InfoWindow(popOpts);
+				google.maps.event.addListener(googleMarker, 'click', function() {
+					popup.open(googleMap);
+				});
+				} 
+				else {
+					alert('No results found');
+				}
+			} 
+			else {
+				alert('Geocoder failed due to: ' + status);
+			}
+			});
+}
+
+//stop tracking current position
+function stopWatch() {
+	if (watchId) {
+		navigator.geolocation.clearWatch(watchId);
+		watchId = null;
+
+	}
+}
+
+function showError(error) {
+	var err = document.getElementById('mapholder');
+	switch(error.code) {
+		case error.PERMISSION_DENIED:
+			err.innerHTML = "User denied the request for Geolocation."
+			break;
+		case error.POSITION_UNAVAILABLE:
+			err.innerHTML = "Location information is unavailable."
+			break;
+		case error.TIMEOUT:
+			err.innerHTML = "The request to get user location timed out."
+			break;
+		case error.UNKNOWN_ERROR:
+			err.innerHTML = "An unknown error occurred."
+			break;
+	}
+}
+
+//haversine	formula function
+function distance(lat1,lon1,lat2,lon2,unit){
+	var radlat1 = Math.PI * lat1/180
+    var radlat2 = Math.PI * lat2/180
+    var radlon1 = Math.PI * lon1/180
+    var radlon2 = Math.PI * lon2/180
+    var theta = lon1-lon2
+    var radtheta = Math.PI * theta/180
+    var dist = Math.sin(radlat1) * Math.sin(radlat2) + Math.cos(radlat1) * Math.cos(radlat2) * Math.cos(radtheta);
+    dist = Math.acos(dist)
+    dist = dist * 180/Math.PI
+    dist = dist * 60 * 1.1515
+    if (unit=="K") { dist = dist * 1.609344 }
+    if (unit=="N") { dist = dist * 0.8684 }
+    return dist
+}
+</script>
+</body>
+
+</html>
